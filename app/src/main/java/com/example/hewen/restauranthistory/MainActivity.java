@@ -3,7 +3,6 @@ package com.example.hewen.restauranthistory;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.*;
-import java.util.logging.Handler;
 import java.text.SimpleDateFormat;
 
 import android.os.AsyncTask;
@@ -16,7 +15,6 @@ import android.widget.*;
 import android.content.ContentResolver;
 import android.database.Cursor;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.apache.http.HttpEntity;
@@ -24,10 +22,8 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-
+import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
     private ListView mLvShow;
@@ -40,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     private MyTask mTask;
     private ProgressBar progressBar;
     private TextView textView;
+    private List<String> phoneNumberList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,10 +47,9 @@ public class MainActivity extends AppCompatActivity {
         execute.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //注意每次需new一个实例,新建的任务只能执行一次,否则会出现异常
                 mTask = new MyTask();
                 //mTask.execute("https://proapi.whitepages.com/3.0/phone?phone=7347692748&api_key=0a72b3db937a46c28eb1db04df8eab54");
-                mTask.execute("http://www.google.com");
+                mTask.execute("http://www.baidu.com");
                 execute.setEnabled(false);
                 cancel.setEnabled(true);
             }
@@ -68,6 +64,17 @@ public class MainActivity extends AppCompatActivity {
         });
         progressBar = (ProgressBar) findViewById(R.id.progress_bar);
         textView = (TextView) findViewById(R.id.text_view);
+        String url_front = "https://proapi.whitepages.com/3.0/phone?phone=";
+        String url_back = "&api_key=0a72b3db937a46c28eb1db04df8eab54";
+        String phone_number;
+        String url;
+        phoneNumberList = getPhoneNumberList();
+        for (int i = 0 ; i < phoneNumberList.size() ; i++) {
+            mTask = new MyTask();
+            phone_number = phoneNumberList.get(i);
+            url = url_front + phone_number + url_back;
+            mTask.execute(url);
+        }
     }
 
     /************************ try begin **************************/
@@ -99,8 +106,8 @@ public class MainActivity extends AppCompatActivity {
                             "\"country_code\":\"US\",\"lat_long\":{\"latitude\":42.302571,\"longitude\":-83.705776,\"accuracy\":\"RoofTop\"},\"is_active\":true," +
                             "\"delivery_point\":\"SingleUnit\"}],\"associated_people\":[],\"alternate_phones\":[\"7347693118\"],\"warnings\":[]}";
                     ObjectMapper mapper = new ObjectMapper();
-                    TypeReference<Map<String, Object>> typeRef = new TypeReference<Map<String, Object>>() {};
-                    Map<String, Object> jsonMap = mapper.readValue(test, typeRef);
+                    JSONObject dataJson=new JSONObject(is.toString());
+                    String phonenumber = dataJson.getString("phone_number");
                     /*********/
                     long total = entity.getContentLength();
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -113,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
                         publishProgress((int) ((count / (float) total) * 100));
                         Thread.sleep(100);
                     }
-                    return new String(baos.toByteArray(), "gb2312");
+                    return phonenumber;
                 }
             } catch (Exception e) {
                 Log.e(TAG, e.getMessage());
@@ -132,8 +139,8 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(String result) {
             Log.i(TAG, "onPostExecute(Result result) called");
             textView.setText(result);
-            execute.setEnabled(true);
-            cancel.setEnabled(false);
+            //execute.setEnabled(true);
+            //cancel.setEnabled(false);
         }
 
         @Override
@@ -142,8 +149,8 @@ public class MainActivity extends AppCompatActivity {
             textView.setText("cancelled");
             progressBar.setProgress(0);
 
-            execute.setEnabled(true);
-            cancel.setEnabled(false);
+            //execute.setEnabled(true);
+            //cancel.setEnabled(false);
         }
     }
     /********************* try end *********************/
@@ -191,6 +198,24 @@ public class MainActivity extends AppCompatActivity {
             map.put("duration", (duration / 60) + "min");
             map.put("type", typeString);
             list.add(map);
+        }
+        return list;
+    }
+
+    private List<String> getPhoneNumberList(){
+        ContentResolver resolver = getContentResolver();
+        Cursor cursor = resolver.query(CallLog.Calls.CONTENT_URI, // URI for searching phone call history
+                new String[] { CallLog.Calls.CACHED_NAME // contact name of the number you dialed
+                        , CallLog.Calls.NUMBER // phone number of the phone call history
+                        , CallLog.Calls.DATE // date of the phone call
+                        , CallLog.Calls.DURATION // duration of the phone call
+                        , CallLog.Calls.TYPE } // type of the pnoe call
+                , null, null, CallLog.Calls.DEFAULT_SORT_ORDER // show from the most recently call to the least recently call
+        );
+        List<String> list = new ArrayList<>();
+        while(cursor.moveToNext()){
+            String number = cursor.getString(cursor.getColumnIndex(CallLog.Calls.NUMBER));
+            list.add(number);
         }
         return list;
     }
