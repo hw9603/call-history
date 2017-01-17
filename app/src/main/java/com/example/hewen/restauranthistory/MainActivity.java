@@ -23,7 +23,9 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONArray;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 public class MainActivity extends AppCompatActivity {
     private ListView mLvShow;
@@ -37,57 +39,71 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private TextView textView;
     private List<String> phoneNumberList;
+    private Button place;
+
+    private String comInfo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        final String google_url_front = "https://maps.googleapis.com/maps/api/place/search/json?";
+        final String google_url_back = "&key=AIzaSyDt3UWjvleAATeUilvewMm5gYpTDCsNgeY";
+        final String wp_url_front = "https://proapi.whitepages.com/3.0/phone?phone=";
+        final String wp_url_back = "&api_key=0a72b3db937a46c28eb1db04df8eab54";
+        final String phone_number;
         execute = (Button) findViewById(R.id.execute);
+        cancel = (Button) findViewById(R.id.cancel);
+        place = (Button) findViewById(R.id.placeType);
+        progressBar = (ProgressBar) findViewById(R.id.progress_bar);
+        textView = (TextView) findViewById(R.id.text_view);
+        place.setEnabled(false);
+
+        phoneNumberList = getPhoneNumberList();
+
         execute.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mTask = new MyTask();
                 //mTask.execute("https://proapi.whitepages.com/3.0/phone?phone=7347692748&api_key=0a72b3db937a46c28eb1db04df8eab54");
                 mTask.execute("http://www.baidu.com");
+                mTask = new MyTask();
                 execute.setEnabled(false);
                 cancel.setEnabled(true);
+                place.setEnabled(true);
             }
         });
-        cancel = (Button) findViewById(R.id.cancel);
+
+        place.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                mTask = new MyTask();
+                mTask.execute(google_url_front+comInfo+google_url_back);
+            }
+        });
+
         cancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //取消一个正在执行的任务,onCancelled方法将会被调用
                 mTask.cancel(true);
             }
         });
-        progressBar = (ProgressBar) findViewById(R.id.progress_bar);
-        textView = (TextView) findViewById(R.id.text_view);
-        String url_front = "https://proapi.whitepages.com/3.0/phone?phone=";
-        String url_back = "&api_key=0a72b3db937a46c28eb1db04df8eab54";
-        String phone_number;
-        String url;
-        phoneNumberList = getPhoneNumberList();
-        for (int i = 0 ; i < phoneNumberList.size() ; i++) {
+
+        /*for (int i = 0 ; i < phoneNumberList.size() ; i++) {
             mTask = new MyTask();
             phone_number = phoneNumberList.get(i);
-            url = url_front + phone_number + url_back;
-            mTask.execute(url);
-        }
+            wp_url = wp_url_front + phone_number + wp_url_back;
+            //mTask.execute(wp_url);
+            mTask.execute("http://www.baidu.com");
+            mTask = new MyTask();
+            google_url = google_url_front + comInfo + google_url_back;
+            mTask.execute(google_url);
+        }*/
     }
 
-    /************************ try begin **************************/
-    // "https://proapi.whitepages.com/3.0/phone?phone=7347692748&api_key=0a72b3db937a46c28eb1db04df8eab54"
     private class MyTask extends AsyncTask<String, Integer, String> {
-        //onPreExecute方法用于在执行后台任务前做一些UI操作
-        @Override
-        protected void onPreExecute() {
-            Log.i(TAG, "onPreExecute() called");
-            textView.setText("loading...");
-        }
 
-        //doInBackground方法内部执行后台任务,不可在此方法内修改UI
         @Override
         protected String doInBackground(String... params) {
             Log.i(TAG, "doInBackground(Params... params) called");
@@ -96,66 +112,91 @@ public class MainActivity extends AppCompatActivity {
                 HttpGet get = new HttpGet(params[0]);
                 HttpResponse response = client.execute(get);
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                    HttpEntity entity = response.getEntity();
-                    InputStream is = entity.getContent();
-                    /*********/
                     String test = "{\"phone_number\":\"7347692748\",\"is_valid\":true,\"country_calling_code\":\"1\",\"line_type\":\"FixedVOIP\"," +
                             "\"carrier\":\"Comcast\",\"is_prepaid\":false,\"is_commercial\":true,\"belongs_to\":[{\"name\":\"Evergreen Restaurant\"," +
                             "\"age_range\":null,\"gender\":null,\"type\":\"Business\"}],\"current_addresses\":[{\"street_line_1\":\"2771 Plymouth Rd\"," +
                             "\"street_line_2\":null,\"city\":\"Ann Arbor\",\"postal_code\":\"48105\",\"zip4\":\"2427\",\"state_code\":\"MI\"," +
                             "\"country_code\":\"US\",\"lat_long\":{\"latitude\":42.302571,\"longitude\":-83.705776,\"accuracy\":\"RoofTop\"},\"is_active\":true," +
                             "\"delivery_point\":\"SingleUnit\"}],\"associated_people\":[],\"alternate_phones\":[\"7347693118\"],\"warnings\":[]}";
-                    ObjectMapper mapper = new ObjectMapper();
-                    JSONObject dataJson=new JSONObject(is.toString());
-                    String phonenumber = dataJson.getString("phone_number");
-                    /*********/
-                    long total = entity.getContentLength();
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    byte[] buf = new byte[1024];
-                    int count = 0;
-                    int length = -1;
-                    while ((length = is.read(buf)) != -1) {
-                        baos.write(buf, 0, length);
-                        count += length;
-                        publishProgress((int) ((count / (float) total) * 100));
-                        Thread.sleep(100);
+                    HttpEntity entity = response.getEntity();
+                    InputStream is = entity.getContent();
+                    //ObjectMapper mapper = new ObjectMapper();
+                    //JSONObject dataJson=new JSONObject(is.toString());
+                    if (params[0].indexOf("m") == 8){ // url is from google place api
+                        long total = entity.getContentLength();
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        byte[] buf = new byte[1024];
+                        int count = 0;
+                        int length = -1;
+                        while ((length = is.read(buf)) != -1) {
+                            baos.write(buf, 0, length);
+                            count += length;
+                            publishProgress((int) ((count / (float) total) * 100));
+                        }
+                        String content = new String(baos.toByteArray(),"gb2312");
+                        JSONObject googleJson = new JSONObject(content);
+                        JSONArray res = googleJson.getJSONArray("results");
+                        String type = res.getJSONObject(0).getString("types");
+                        return type;
                     }
-                    return phonenumber;
+                    else{ // url is from whitepages api
+                        JSONObject dataJson = new JSONObject(test); //for testing purpose
+
+                        // first sort out those that are not commercial
+                        boolean is_commercial = dataJson.getBoolean("is_commercial");
+
+                        if (!is_commercial){
+                            String e = "";
+                            return e;
+                        }
+
+                        JSONArray addr = dataJson.getJSONArray("current_addresses");
+                        JSONObject latLong = addr.getJSONObject(0).getJSONObject("lat_long");
+
+                        // transfer the location and name information to Google place api
+                        String information = "location=";
+                        information += String.valueOf(latLong.getDouble("latitude"));
+                        information += ",";
+                        information += String.valueOf(latLong.getDouble("longitude"));
+                        information += "&name=";
+                        JSONArray belong = dataJson.getJSONArray("belongs_to");
+                        String name = belong.getJSONObject(0).getString("name");
+                        name = name.replaceAll(" ", "+");
+                        information += name;
+
+                        long total = entity.getContentLength();
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        byte[] buf = new byte[1024];
+                        int count = 0;
+                        int length = -1;
+                        while ((length = is.read(buf)) != -1) {
+                            baos.write(buf, 0, length);
+                            count += length;
+                            publishProgress((int) ((count / (float) total) * 100));
+                        }
+                        return information;
+                    }
+
                 }
             } catch (Exception e) {
                 Log.e(TAG, e.getMessage());
             }
             return null;
         }
-
-        @Override
-        protected void onProgressUpdate(Integer... progresses) {
-            Log.i(TAG, "onProgressUpdate(Progress... progresses) called");
-            progressBar.setProgress(progresses[0]);
-            textView.setText("loading..." + progresses[0] + "%");
-        }
-
         @Override
         protected void onPostExecute(String result) {
             Log.i(TAG, "onPostExecute(Result result) called");
-            textView.setText(result);
-            //execute.setEnabled(true);
-            //cancel.setEnabled(false);
-        }
+            //textView.setText(result);
+            comInfo = result;
+            if (!comInfo.isEmpty()){
+                textView.append(comInfo);
+            }
 
-        @Override
-        protected void onCancelled() {
-            Log.i(TAG, "onCancelled() called");
-            textView.setText("cancelled");
-            progressBar.setProgress(0);
-
-            //execute.setEnabled(true);
-            //cancel.setEnabled(false);
+            execute.setEnabled(true);
+            cancel.setEnabled(false);
         }
     }
-    /********************* try end *********************/
 
-    //@RequiresPermission(android.Manifest.permission.READ_CALL_LOG)
     private List<Map<String, String>> getDataList(){
         ContentResolver resolver = getContentResolver();
         Cursor cursor = resolver.query(CallLog.Calls.CONTENT_URI, // URI for searching phone call history
