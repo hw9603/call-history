@@ -43,7 +43,7 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-core:2.5.3'
     //compile 'com.fasterxml.jackson.core:jackson-annotations:2.5.3'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.5.3'
-
+    compile 'com.github.PhilJay:MPAndroidChart:v2.1.6'
     compile group: 'org.apache.httpcomponents' , name: 'httpclient-android' , version: '4.3.5.1'
 
     testCompile 'junit:junit:4.12'

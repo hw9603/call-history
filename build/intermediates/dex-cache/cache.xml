@@ -12,6 +12,15 @@
     </item>
     <item
         is-multidex="true"
+        jar="/Users/hewen/.gradle/caches/modules-2/files-2.1/com.github.PhilJay/MPAndroidChart/v2.1.6/b036abbb61656165da99cf44898e4b9123687e65/MPAndroidChart-v2.1.6.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="25.0.2"
+        sha1="b036abbb61656165da99cf44898e4b9123687e65">
+        <dex dex="/Users/hewen/AndroidStudioProjects/call-history/app/build/intermediates/transforms/dex/debug/folders/1000/10/MPAndroidChart-v2.1.6_235678823f0523983f66f6d10693cafe0ad7eb7c/classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
         jar="/Users/hewen/AndroidStudioProjects/call-history/app/build/intermediates/incremental-runtime-classes/debug/instant-run.jar"
         jumboMode="true"
         optimize="true"
