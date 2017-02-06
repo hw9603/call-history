@@ -37,6 +37,8 @@ import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.github.mikephil.charting.highlight.Highlight;
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.github.mikephil.charting.utils.ViewPortHandler;
 
 
@@ -49,17 +51,18 @@ public class MainActivity extends AppCompatActivity {
     private Button execute;
     private Button cancel;
     private MyTask mTask;
-    private ProgressBar progressBar;
     private TextView textView;
-    private List<Map<String,String>> phoneNumberList;
-    private Button place;
+    private List<String> phoneNumberList;
     private Button histogram;
 
     private String comInfo;
 
     private BarChart barChart;
+    private TextView detail;
     private XAxis xAxis;
+    private Map<String, Integer> potentialRestaurant = new HashMap<>();
 
+    private String lastName; // the recent place name got from whitepages api
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 barChart = (BarChart)findViewById(R.id.barChart);
+
                 xAxis = barChart.getXAxis();
                 xAxis.setDrawAxisLine(true);
                 xAxis.setDrawGridLines(false);
@@ -79,26 +83,23 @@ public class MainActivity extends AppCompatActivity {
                 barChart.setTouchEnabled(true);
                 barChart.setDragEnabled(true);
                 barChart.setScaleEnabled(true);
+                barChart.setDrawGridBackground(true);
                 // y-axis
                 barChart.setDescription("Number of Calls");
                 barChart.getAxisLeft().setEnabled(false);
                 barChart.getAxisRight().setEnabled(false);
-                Legend legend = barChart.getLegend();// hide legend
+                barChart.getXAxis().setLabelsToSkip(0);
+                barChart.setNoDataText("Please press the execute button first to get data!");
+                Legend legend = barChart.getLegend();
                 legend.setEnabled(false);
 
                 ArrayList<String> xValues = new ArrayList<String>();
-                xValues.add("一季度");
-                xValues.add("二季度");
-                xValues.add("三季度");
-                xValues.add("四季度");
+                for (Map.Entry<String, Integer> ent:potentialRestaurant.entrySet()){
+                    xValues.add(ent.getKey());
+                }
 
-                xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);//数据位于底部
+                xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
                 ArrayList<BarEntry> yValues = new ArrayList<BarEntry>();
-
-                yValues.add(new BarEntry(20, 0));
-                yValues.add(new BarEntry(18, 1));
-                yValues.add(new BarEntry(4, 2));
-                yValues.add(new BarEntry(45, 3));
 
                 BarDataSet barDataSet=new BarDataSet(yValues,"");
                 barDataSet.setValueFormatter(new ValueFormatter() {
@@ -108,73 +109,74 @@ public class MainActivity extends AppCompatActivity {
                         return n + " ";
                     }
                 });
-                //6、设置柱状图的颜色
-                barDataSet.setColors(new int[]{Color.rgb(247, 211, 149), Color.rgb(209, 252, 153),
-                        Color.rgb(161, 232, 251), Color.rgb(239, 147, 156)});
-                //7、显示，柱状图的宽度和动画效果
+
+                int index = 0;
+                int[] colors = new int[potentialRestaurant.size()];
+                for (Map.Entry<String, Integer> ent:potentialRestaurant.entrySet()){
+                    yValues.add(new BarEntry(ent.getValue(), index));
+                    colors[index] = Color.rgb((int)(Math.random() * 255 + 1), (int)(Math.random() * 255 + 1), (int)(Math.random() * 255 + 1));
+                    index++;
+                }
+
+                barDataSet.setColors(colors);
+
                 BarData barData = new BarData(xValues, barDataSet);
-                barDataSet.setBarSpacePercent(40f);//值越大，柱状图就越宽度越小；
+                barDataSet.setBarSpacePercent(40f);
                 barChart.animateY(1000);
-                barChart.setData(barData); //
+                barChart.setData(barData);
             }
         });
+
+        detail = (TextView) findViewById(R.id.detail);
+        /*barChart.setOnChartValueSelectedListener(new OnChartValueSelectedListener() {
+            @Override
+            public void onValueSelected(Entry e, int dataSetIndex, Highlight h) {
+                detail.setText(e.toString());
+            }
+
+            @Override
+            public void onNothingSelected() {
+
+            }
+        });*/
 
         final String google_url_front = "https://maps.googleapis.com/maps/api/place/search/json?";
         final String google_url_back = "&key=AIzaSyDt3UWjvleAATeUilvewMm5gYpTDCsNgeY";
         final String wp_url_front = "https://proapi.whitepages.com/3.0/phone?phone=";
         final String wp_url_back = "&api_key=0a72b3db937a46c28eb1db04df8eab54";
-        final String phone_number;
         execute = (Button) findViewById(R.id.execute);
         cancel = (Button) findViewById(R.id.cancel);
-        place = (Button) findViewById(R.id.placeType);
-        progressBar = (ProgressBar) findViewById(R.id.progress_bar);
         textView = (TextView) findViewById(R.id.text_view);
-        place.setEnabled(false);
-
-        phoneNumberList = getDataList();
-
-        for (int i = 0 ; i < phoneNumberList.size() ; i++){
-            textView.setText(phoneNumberList.get(i).get("number"));
-        }
+        histogram.setEnabled(false);
+        cancel.setEnabled(false);
 
         execute.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mTask = new MyTask();
-                //mTask.execute("https://proapi.whitepages.com/3.0/phone?phone=7347692748&api_key=0a72b3db937a46c28eb1db04df8eab54");
-                mTask.execute("http://www.baidu.com");
-                mTask = new MyTask();
+                potentialRestaurant.clear();
+                for (int i = 0 ; i < getDataList().size() ; i++) {
+                    mTask = new MyTask();
+                    String phone_number = getDataList().get(i);
+                    String wp_url = wp_url_front + phone_number + wp_url_back;
+                    mTask.execute(wp_url);
+                    //mTask.execute("http://www.baidu.com");
+                    /*mTask = new MyTask();
+                    if (!comInfo.isEmpty()){
+                        // if the phone relates to a commercial place, search for the type of the place
+                        String google_url = google_url_front + comInfo + google_url_back;
+                        mTask.execute(google_url);
+                    }*/
+                }
                 execute.setEnabled(false);
                 cancel.setEnabled(true);
-                place.setEnabled(true);
             }
         });
-
-        place.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                mTask = new MyTask();
-                mTask.execute(google_url_front+comInfo+google_url_back);
-            }
-        });
-
         cancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mTask.cancel(true);
             }
         });
-
-        /*for (int i = 0 ; i < phoneNumberList.size() ; i++) {
-            mTask = new MyTask();
-            phone_number = phoneNumberList.get(i);
-            wp_url = wp_url_front + phone_number + wp_url_back;
-            //mTask.execute(wp_url);
-            mTask.execute("http://www.baidu.com");
-            mTask = new MyTask();
-            google_url = google_url_front + comInfo + google_url_back;
-            mTask.execute(google_url);
-        }*/
     }
 
     private class MyTask extends AsyncTask<String, Integer, String> {
@@ -187,12 +189,12 @@ public class MainActivity extends AppCompatActivity {
                 HttpGet get = new HttpGet(params[0]);
                 HttpResponse response = client.execute(get);
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                    String test = "{\"phone_number\":\"7347692748\",\"is_valid\":true,\"country_calling_code\":\"1\",\"line_type\":\"FixedVOIP\"," +
+                    /*String test = "{\"phone_number\":\"7347692748\",\"is_valid\":true,\"country_calling_code\":\"1\",\"line_type\":\"FixedVOIP\"," +
                             "\"carrier\":\"Comcast\",\"is_prepaid\":false,\"is_commercial\":true,\"belongs_to\":[{\"name\":\"Evergreen Restaurant\"," +
                             "\"age_range\":null,\"gender\":null,\"type\":\"Business\"}],\"current_addresses\":[{\"street_line_1\":\"2771 Plymouth Rd\"," +
                             "\"street_line_2\":null,\"city\":\"Ann Arbor\",\"postal_code\":\"48105\",\"zip4\":\"2427\",\"state_code\":\"MI\"," +
                             "\"country_code\":\"US\",\"lat_long\":{\"latitude\":42.302571,\"longitude\":-83.705776,\"accuracy\":\"RoofTop\"},\"is_active\":true," +
-                            "\"delivery_point\":\"SingleUnit\"}],\"associated_people\":[],\"alternate_phones\":[\"7347693118\"],\"warnings\":[]}";
+                            "\"delivery_point\":\"SingleUnit\"}],\"associated_people\":[],\"alternate_phones\":[\"7347693118\"],\"warnings\":[]}";*/
                     HttpEntity entity = response.getEntity();
                     InputStream is = entity.getContent();
                     //ObjectMapper mapper = new ObjectMapper();
@@ -212,10 +214,24 @@ public class MainActivity extends AppCompatActivity {
                         JSONObject googleJson = new JSONObject(content);
                         JSONArray res = googleJson.getJSONArray("results");
                         String type = res.getJSONObject(0).getString("types");
+                        if (!type.contains("restaurant")){
+                            potentialRestaurant.remove(lastName);
+                        }
                         return type;
                     }
                     else{ // url is from whitepages api
-                        JSONObject dataJson = new JSONObject(test); //for testing purpose
+                        long total = entity.getContentLength();
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        byte[] buf = new byte[1024];
+                        int count = 0;
+                        int length = -1;
+                        while ((length = is.read(buf)) != -1){
+                            baos.write(buf, 0, length);
+                            count += length;
+                            publishProgress((int)((count / (float)total) * 100));
+                        }
+                        String content = new String (baos.toByteArray(), "gb2312");
+                        JSONObject dataJson = new JSONObject(content); //for testing purpose
 
                         // first sort out those that are not commercial
                         boolean is_commercial = dataJson.getBoolean("is_commercial");
@@ -236,19 +252,26 @@ public class MainActivity extends AppCompatActivity {
                         information += "&name=";
                         JSONArray belong = dataJson.getJSONArray("belongs_to");
                         String name = belong.getJSONObject(0).getString("name");
+                        lastName = name;
+                        boolean added = false;
+                        for (Map.Entry<String, Integer> ent :potentialRestaurant.entrySet()){
+                            // check if the name is already in the map,
+                            // if so, increase the number of it
+                            if (ent.getKey().equals(name)){
+                                potentialRestaurant.put(name, ent.getValue() + 1);
+                                added = true;
+                                break;
+                            }
+                        }
+                        // If the place name is not in the list, add it
+                        // This includes two possible situation:
+                        // 1. The place has been proved not a restaurant;
+                        // 2. this is a new place waiting to be proved if it is a restaurant.
+                        if (!added) {
+                            potentialRestaurant.put(name, 1);
+                        }
                         name = name.replaceAll(" ", "+");
                         information += name;
-
-                        long total = entity.getContentLength();
-                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        byte[] buf = new byte[1024];
-                        int count = 0;
-                        int length = -1;
-                        while ((length = is.read(buf)) != -1) {
-                            baos.write(buf, 0, length);
-                            count += length;
-                            publishProgress((int) ((count / (float) total) * 100));
-                        }
                         return information;
                     }
 
@@ -258,21 +281,26 @@ public class MainActivity extends AppCompatActivity {
             }
             return null;
         }
+
+        @Override
+        protected void onPreExecute() {
+            textView.setText("Processing the data...");
+        }
+
         @Override
         protected void onPostExecute(String result) {
             Log.i(TAG, "onPostExecute(Result result) called");
-            //textView.setText(result);
             comInfo = result;
-            if (!comInfo.isEmpty()){
-                textView.append(comInfo);
-            }
-
+            textView.setText("All done! Check the histogram!");
+            //textView.setText(result);
             execute.setEnabled(true);
             cancel.setEnabled(false);
+            histogram.setEnabled(true);
+
         }
     }
 
-    private List<Map<String, String>> getDataList(){
+    private List<String> getDataList(){
         ContentResolver resolver = getContentResolver();
         Cursor cursor = resolver.query(CallLog.Calls.CONTENT_URI, // URI for searching phone call history
                 new String[] { CallLog.Calls.CACHED_NAME // contact name of the number you dialed
@@ -289,7 +317,7 @@ public class MainActivity extends AppCompatActivity {
         while (cursor.moveToNext()) {
             total_calls++;
             String name = cursor.getString(cursor.getColumnIndex(CallLog.Calls.CACHED_NAME));
-            if (name == null){
+            if (name != null){
                 // if the number is saved in the phone, then we prune that out (unlikely to be the business)
                 continue;
             }
@@ -319,9 +347,9 @@ public class MainActivity extends AppCompatActivity {
                 prune_out_list.add(entry.getKey());
             }
         }
-
+        List<String> phoneNumberList = new ArrayList<>();
         for (int i = 0 ; i < list.size() ; i++){
-            if (Integer.parseInt(list.get(i).get("duration")) > avg_duration){
+            /*if (Integer.parseInt(list.get(i).get("duration")) > avg_duration){
                 //if the duration is long, prune that out
                 list.remove(i);
                 continue;
@@ -329,9 +357,12 @@ public class MainActivity extends AppCompatActivity {
             String number = list.get(i).get("number");
             if (prune_out_list.contains(number)){
                 list.remove(i);
-            }
+            }*/
         }
-        return list;
+        for (int i = 0 ; i < list.size() ; i++){
+            phoneNumberList.add(list.get(i).get("number"));
+        }
+        return phoneNumberList;
     }
 
     /*public void export_click(View view){
