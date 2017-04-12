@@ -46,5 +46,7 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-core:2.5.3'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.5.3'
     compile 'com.github.PhilJay:MPAndroidChart:v2.1.6'
+    compile 'com.android.support:design:25.1.0'
+    compile 'com.android.support:support-v4:25.1.0'
     testCompile 'junit:junit:4.12'
 }

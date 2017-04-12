@@ -3,12 +3,39 @@
 
     <item
         is-multidex="true"
+        jar="/Users/hewen/.android/build-cache/9ba9901ffe05786d0aaf4785d71b1afc694b5be3/output/jars/classes.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="25.0.2"
+        sha1="30103d98fa5ed824b54af839c85e2111f9bde8ec">
+        <dex dex="/Users/hewen/AndroidStudioProjects/call-history/app/build/intermediates/transforms/dex/debug/folders/1000/10/classes_4c0a0a18f907c68fa6e7224940258611c52af2aa/classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="/Users/hewen/.android/build-cache/59a4aa5d00cfb8630523329f510f38a4c3d3b6c3/output/jars/classes.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="25.0.2"
+        sha1="d38084015027549951cbaea5d5f6fb795cc81151">
+        <dex dex="/Users/hewen/AndroidStudioProjects/call-history/app/build/intermediates/transforms/dex/debug/folders/1000/10/classes_ea9783c3f063ff0e2b67d156c7820c360fe7b342/classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
         jar="/Users/hewen/AndroidStudioProjects/call-history/app/build/intermediates/incremental-classes/debug/instant-run-bootstrap.jar"
         jumboMode="true"
         optimize="true"
         revision="25.0.2"
-        sha1="e292eefa2c69cf5cc12b406e7d89bfdd316ac81f">
+        sha1="4e289312f06ce6a9aa9995866e590bc8dc4ed87a">
         <dex dex="/Users/hewen/AndroidStudioProjects/call-history/app/build/intermediates/transforms/dex/debug/folders/1000/10000/instant-run-bootstrap_0ad698b237cfbf0a6bac033eab3eee9f23a7fa94/classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="/Users/hewen/AndroidStudioProjects/call-history/app/build/intermediates/incremental-runtime-classes/debug/instant-run.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="25.0.2"
+        sha1="c323c36ecc68965c4cfb460f7721113d2b61ed03">
+        <dex dex="/Users/hewen/AndroidStudioProjects/call-history/app/build/intermediates/transforms/dex/debug/folders/1000/10000/instant-run_4afcb2c9697ffa9c643762e9cbbee75f32c90e23/classes.dex" />
     </item>
     <item
         is-multidex="true"
@@ -21,12 +48,12 @@
     </item>
     <item
         is-multidex="true"
-        jar="/Users/hewen/AndroidStudioProjects/call-history/app/build/intermediates/incremental-runtime-classes/debug/instant-run.jar"
+        jar="/Users/hewen/.android/build-cache/c8e97ae0d757115e09400caf3546bdcc409ef9e2/output/jars/classes.jar"
         jumboMode="true"
         optimize="true"
         revision="25.0.2"
-        sha1="7fadb286755322aaaf03484e62370b1a2c5e1a75">
-        <dex dex="/Users/hewen/AndroidStudioProjects/call-history/app/build/intermediates/transforms/dex/debug/folders/1000/10000/instant-run_4afcb2c9697ffa9c643762e9cbbee75f32c90e23/classes.dex" />
+        sha1="b266c8faa5af72e579b9da36ef35053ffed6ac64">
+        <dex dex="/Users/hewen/AndroidStudioProjects/call-history/app/build/intermediates/transforms/dex/debug/folders/1000/10/classes_cda63b03980b9c1097b1cfa7e1b9d19b517c5407/classes.dex" />
     </item>
 
 </items>

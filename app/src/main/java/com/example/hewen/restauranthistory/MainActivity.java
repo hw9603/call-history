@@ -158,14 +158,14 @@ public class MainActivity extends AppCompatActivity {
                     mTask = new MyTask();
                     String phone_number = getDataList().get(i);
                     String wp_url = wp_url_front + phone_number + wp_url_back;
-                    mTask.execute(wp_url);
+                    //mTask.execute(wp_url);
                     //mTask.execute("http://www.baidu.com");
-                    /*mTask = new MyTask();
+                    mTask = new MyTask();
                     if (!comInfo.isEmpty()){
                         // if the phone relates to a commercial place, search for the type of the place
                         String google_url = google_url_front + comInfo + google_url_back;
                         mTask.execute(google_url);
-                    }*/
+                    }
                 }
                 execute.setEnabled(false);
                 cancel.setEnabled(true);
